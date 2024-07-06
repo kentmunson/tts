@@ -1,6 +1,8 @@
+import datetime
 import os
 
 from dotenv import load_dotenv
+import pandas as pd
 
 from ttkm.auth import get_access_token
 from ttkm.video import query_videos
@@ -47,8 +49,19 @@ client_secret = os.getenv("CLIENT_SECRET")
 # Call the function with your credentials
 token = get_access_token(client_key, client_secret)
 
+# TODO - Build loop for each month
+
 # Use the token and the query to query videos
 response_json = query_videos(query=query, token=token, fields=fields)
 
 # Print the response
 print(response_json)
+
+# Load it into a dataframe
+df = pd.DataFrame(response_json["data"]["videos"])
+
+df["timestamp"] = df["create_time"].apply(lambda x: datetime.datetime.fromtimestamp(x))
+
+print(df.head())
+
+# TODO - Combine dataframes and dump it

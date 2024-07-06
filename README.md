@@ -27,7 +27,7 @@ These all go in the `fields` parameter in the URL.
 * Engagement Stats
 
 #### Query Details
-We'll pull those fields for the top 1k videos (ordered by engagement) that match these criteria, for each year from 2016-2024:
+We'd like to pull those fields for the top 1k videos (ordered by engagement) that match these criteria, for each year from 2016-2024:
 
 * Tagged with `#adulting`
 * In the USA
