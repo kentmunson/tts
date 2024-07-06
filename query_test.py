@@ -7,6 +7,18 @@ from ttkm.video import query_videos
 
 load_dotenv()
 
+fields = [
+    "id",
+    "create_time",
+    "username",
+    "video_description",
+    "like_count",
+    "comment_count",
+    "share_count",
+    "view_count",
+    "hashtag_names"
+]
+
 query = {
     "query": {
         "and": [
@@ -14,6 +26,11 @@ query = {
                 "operation": "EQ",
                 "field_name": "hashtag_name",
                 "field_values": ["adulting"],
+            },
+            {
+                "operation": "IN",
+                "field_name": "region_code",
+                "field_values": ["US"],
             },
         ]
     },
@@ -23,19 +40,6 @@ query = {
     "end_date": "20240131",
 }
 
-test_query = {
-    "query": {
-        "and": [
-            { "operation": "IN", "field_name": "region_code", "field_values": ["US", "CA"] },
-            { "operation": "EQ", "field_name": "keyword", "field_values": ["hello world"] }
-        ]
-    },
-    "start_date": "20220615",
-    "end_date": "20220628",
-    "max_count": 10
-}
-
-
 # Replace with your actual client key and client secret
 client_key = os.getenv("CLIENT_KEY")
 client_secret = os.getenv("CLIENT_SECRET")
@@ -44,7 +48,7 @@ client_secret = os.getenv("CLIENT_SECRET")
 token = get_access_token(client_key, client_secret)
 
 # Use the token and the query to query videos
-response_json = query_videos(query=query, token=token)
+response_json = query_videos(query=query, token=token, fields=fields)
 
 # Print the response
 print(response_json)

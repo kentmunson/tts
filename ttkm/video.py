@@ -1,9 +1,17 @@
 import json
 import requests
 
-VIDEO_URL = "https://open.tiktokapis.com/v2/research/video/query/?fields=id,video_description"
+from typing import List
 
-def query_videos(query: dict, token: str):
+VIDEO_URL = "https://open.tiktokapis.com/v2/research/video/query/"
+
+def build_url(fields: List, base_url: str = VIDEO_URL):
+    if not fields:
+        raise ValueError("You did not specify any fields to pull!")
+    fields_substr = ",".join(fields)
+    return base_url + "?fields=" + fields_substr
+
+def query_videos(query: dict, token: str, fields: List):
     """Query TikTok video API with parameters defined in 'query.'"""
     # Request headers
     headers = {
@@ -12,7 +20,12 @@ def query_videos(query: dict, token: str):
     }
     print(query)
 
-    # for some reason, the API did not like data as a dict, so we dump it
-    response = requests.post(VIDEO_URL, headers=headers, data=json.dumps(query))
+    # Build URL
+    url = build_url(fields)
+    print(url)
+
+    # For some reason, the API did not like data as a dict, so we dump it
+    response = requests.post(url, headers=headers, data=json.dumps(query))
     print(response.status_code)
+
     return response.json()
