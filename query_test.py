@@ -1,5 +1,8 @@
-import datetime
+from datetime import date, datetime, timedelta
 import os
+from random import randint
+import time
+from typing import List
 
 from dotenv import load_dotenv
 import pandas as pd
@@ -8,6 +11,8 @@ from ttkm.auth import get_access_token
 from ttkm.video import query_videos
 
 load_dotenv()
+
+current_date = date(2024, 7, 1)
 
 fields = [
     "id",
@@ -40,7 +45,22 @@ query = {
     "cursor": 0,
     "start_date": "20240101",
     "end_date": "20240131",
+    "is_random": True,
 }
+
+
+def embed_link(id: int):
+    """Return a static link to a TikTok video, given its ID."""
+    return f"https://www.tiktok.com/embed/{id}"
+
+
+def dump_dataframes(current_date: date, dataframes: List[pd.DataFrame]):
+    """Dump a list of dataframes marked with the previous date."""
+    previous_date_str = (current_date - timedelta(days=1)).strftime("%Y%m")
+    fp = f"data/tiktok_adulting_{previous_date_str}.csv"
+    monthly_df = pd.concat(dataframes).reset_index(drop=True)
+    monthly_df.to_csv(fp)
+
 
 # Replace with your actual client key and client secret
 client_key = os.getenv("CLIENT_KEY")
@@ -49,19 +69,53 @@ client_secret = os.getenv("CLIENT_SECRET")
 # Call the function with your credentials
 token = get_access_token(client_key, client_secret)
 
-# TODO - Build loop for each month
+# Build loop for each month
+today = date.today()
+dataframes = []
 
-# Use the token and the query to query videos
-response_json = query_videos(query=query, token=token, fields=fields)
+while current_date < today:
+    # Print or use the first day of the current month
+    if current_date.day == 1:
+        # Print for keeping track of progress
+        print(f"Querying {str(current_date)}")
 
-# Print the response
-print(response_json)
+        if dataframes:
+            # Dump the previous month's dataframes
+            dump_dataframes(current_date, dataframes)
 
-# Load it into a dataframe
-df = pd.DataFrame(response_json["data"]["videos"])
+            # Reset the list
+            dataframes = []
 
-df["timestamp"] = df["create_time"].apply(lambda x: datetime.datetime.fromtimestamp(x))
+    # Update query
+    current_date_str = current_date.strftime("%Y%m%d")
 
-print(df.head())
+    query["start_date"] = current_date_str
+    query["end_date"] = current_date_str
+    
+    # Use the token and the query to query videos
+    response_json = query_videos(query=query, token=token, fields=fields)
 
-# TODO - Combine dataframes and dump it
+    # Print the response
+    print(response_json)
+
+    data = response_json.get("data")
+    if data["videos"]:
+        # Load it into a dataframe
+        df = pd.DataFrame(response_json["data"]["videos"])
+
+        # Reformat timestamp
+        df["timestamp"] = df["create_time"].apply(lambda x: datetime.fromtimestamp(x))
+
+        # Create link
+        df["embed_link"] = df["id"].apply(embed_link)
+
+        # Store it in memory
+        dataframes.append(df)        
+
+    current_date += timedelta(days=1)
+    time.sleep(randint(3, 7))
+
+# Dump any remaining dataframes
+dump_dataframes(current_date, dataframes)
+
+print("All finished!")
